@@ -16,6 +16,7 @@ type generator struct {
 	*bytes.Buffer
 	typeToFile map[string]string
 	linkBase   string
+	comments   map[string][]*SourceCodeInfo_Location
 }
 
 func (g *generator) P(args ...string) {
@@ -53,7 +54,9 @@ func main() {
 		dir, prof := filepath.Split(r.GetName())
 		linkBase := strings.Repeat("../", len(strings.Split(dir, "/"))-1)
 
-		g := generator{new(bytes.Buffer), typeToFile, linkBase}
+		g := generator{new(bytes.Buffer), typeToFile, linkBase, nil}
+
+		g.loadComments(r)
 
 		g.WriteString(`<!DOCTYPE html><html lang="en"><head><title>`)
 		g.WriteString(prof)
@@ -90,7 +93,8 @@ li > .file {
 
 		g.P("</ul><ul>")
 
-		for _, s := range r.Service {
+		for i, s := range r.Service {
+			g.generateService(s, fmt.Sprintf("6,%d", i))
 			g.P("<li><code>service ", s.GetName(), "</code></li>")
 		}
 
@@ -125,6 +129,37 @@ li > .file {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (g *generator) generateService(s *ServiceDescriptorProto, path string) {
+	g.P(`<li><code><pre>service `, s.GetName(), "{\n")
+	for i, m := range s.GetMethod() {
+		if i != 0 {
+			g.P("\n")
+		}
+		loc, ok := g.comment(fmt.Sprintf("%s,2,%d", path, i))
+		if ok {
+			g.P("\t//", strings.Replace(strings.TrimSuffix(*loc.LeadingComments, "\n"), "\n", "\n"+"\t//", -1), "\n")
+		}
+		g.P("\trpc ", m.GetName(), "(")
+		if m.GetClientStreaming() {
+			g.P("stream ")
+		}
+		g.P(m.GetInputType(), ") returns (")
+		if m.GetServerStreaming() {
+			g.P("stream ")
+		}
+		g.P(m.GetOutputType(), ")")
+		if m.Options != nil {
+			g.P(" {\n")
+			if m.Options.GetDeprecated() {
+				g.P("\t\toption deprecated = true;\n")
+			}
+			g.P("\t}")
+		}
+		g.P(";\n")
+	}
+	g.P(`}</pre></code></li>`)
 }
 
 var typeMap = map[FieldDescriptorProto_Type]string{
@@ -228,10 +263,8 @@ func (g *generator) generateNavigation(fs []*FileDescriptorProto, open string) {
 	//g.P(fmt.Sprintf("%#v", paths))
 }
 
-func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string, d *DescriptorProto) {
-	indent = "\t"
-
-	comments := make(map[string]*SourceCodeInfo_Location)
+func (g *generator) loadComments(f *FileDescriptorProto) {
+	g.comments = make(map[string][]*SourceCodeInfo_Location)
 	for _, loc := range f.SourceCodeInfo.Location {
 		if loc.LeadingComments == nil {
 			continue
@@ -240,13 +273,26 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 		for _, n := range loc.Path {
 			p = append(p, strconv.Itoa(int(n)))
 		}
-		g.P("- ", strings.Join(p, ","), loc.String(), "\n")
-		comments[strings.Join(p, ",")] = loc
+		path := strings.Join(p, ",")
+		g.P("- ", path, loc.String(), "\n")
+		g.comments[path] = append(g.comments[path], loc)
 	}
+}
+
+func (g *generator) comment(path string) (*SourceCodeInfo_Location, bool) {
+	locs, ok := g.comments[path]
+	if !ok {
+		return nil, false
+	}
+	return locs[0], true
+}
+
+func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string, d *DescriptorProto) {
+	indent = "\t"
 
 	g.P(`<li id="`, d.GetName(), `"><code><pre>`)
 
-	loc, ok := comments[path]
+	loc, ok := g.comment(path)
 	if ok {
 		g.P("//", strings.Replace(strings.TrimSuffix(*loc.LeadingComments, "\n"), "\n", "\n"+"//", -1), "\n")
 	}
@@ -287,7 +333,7 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 
 		//g.WriteString()
 
-		loc, ok := comments[fmt.Sprintf("%s,2,%d", path, i)]
+		loc, ok := g.comment(fmt.Sprintf("%s,2,%d", path, i))
 		if ok {
 			g.P("//", strings.Replace(strings.TrimSuffix(*loc.LeadingComments, "\n"), "\n", "\n"+indent+"//", -1), "\n", indent)
 		}
