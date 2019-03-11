@@ -19,10 +19,30 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 	pt.E("span", html.Attribute{Key: "class", Val: "keyword"}).T("message")
 	pt.T(" ", d.GetName(), " {\n")
 
+	var chs []interface{}
+
 	if len(d.NestedType) > 0 {
 		ut := pt.E("ul")
 		for i, message := range d.NestedType {
+			chs = append(chs, d.NestedType[i])
 			g.generateMessage(f, indent+"\t", fmt.Sprintf("%s,3,%d", path, i), message, ut)
+		}
+	}
+
+	if len(d.EnumType) > 0 {
+		for i, x := range d.EnumType {
+			chs = append(chs, d.EnumType[i])
+			pt.T("enum", " ", x.GetName(), " {\n")
+			for _, y := range x.Value {
+				pt.T(indent, y.GetName(), " = ", y.GetNumber(), "\n")
+			}
+			pt.T("}\n")
+		}
+	}
+
+	if len(d.OneofDecl) > 0 {
+		for _, x := range d.OneofDecl {
+			pt.T("oneof", " ", x.GetName(), "\n")
 		}
 	}
 
@@ -50,7 +70,17 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 		pt.T(" ", strings.Join(rs, ", "), ";\n")
 	}
 
+	type oow struct {
+		Field *FieldDescriptorProto
+		Oneof *OneofDescriptorProto
+	}
+
 	for i, field := range d.Field {
+		if d.Field[i].OneofIndex == nil {
+			chs = append(chs, d.Field[i])
+		} else {
+			chs = append(chs, oow{d.Field[i], d.OneofDecl[*d.Field[i].OneofIndex]})
+		}
 
 		loc, ok := g.comment(fmt.Sprintf("%s,2,%d", path, i))
 		if ok {
@@ -64,6 +94,8 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 		pt.T(indent)
 
 		g.addTypeLink(pt, field)
+
+		pt.T(fmt.Sprintf("%d %#v", field.GetOneofIndex(), field))
 
 		pt.T(" ", field.GetName(), " = ")
 		pt.E("span", html.Attribute{Key: "class", Val: "value"}).T(strconv.Itoa(int(field.GetNumber())))
@@ -83,6 +115,11 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 		pt.T("\n")
 	}
 	pt.T(indent[:len(indent)-1], "}")
+
+	u := pt.E("ul")
+	for _, c := range chs {
+		u.E("li").T(fmt.Sprintf("%T", c))
+	}
 }
 
 func (g *generator) addTypeLink(node *generatorNode, field *FieldDescriptorProto) {
