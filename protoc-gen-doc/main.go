@@ -126,12 +126,12 @@ navbar {
 			g.generateMessage(r, "\t", fmt.Sprintf("4,%d", i), m, ut)
 		}
 
-		ut = bt.E("ul")
-		for _, l := range r.SourceCodeInfo.Location {
-			ut.T(fmt.Sprintf("%v%s", l.Path, l))
-		}
+		//ut = bt.E("ul")
+		//for _, l := range r.SourceCodeInfo.Location {
+		//	ut.T(fmt.Sprintf("%v%s", l.Path, l))
+		//}
 
-		bt.E("p").T(fmt.Sprintf("%#v\n\n%#v", r, typeToFile))
+		//bt.E("p").T(fmt.Sprintf("%#v\n\n%#v", r, typeToFile))
 
 		err := html.Render(g, rt.Node)
 		if err != nil {
