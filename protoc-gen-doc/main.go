@@ -93,20 +93,20 @@ navbar {
 
 		ut := bt.E("ul")
 
-		sort.Slice(r.MessageType, func(i, j int) bool {
-			return r.MessageType[i].GetName() < r.MessageType[j].GetName()
-		})
-		for i, m := range r.MessageType {
-			g.generateMessage(r, "\t", fmt.Sprintf("4,%d", i), m, ut)
-		}
-
-		ut = bt.E("ul")
-
 		sort.Slice(r.Service, func(i, j int) bool {
 			return r.Service[i].GetName() < r.Service[j].GetName()
 		})
 		for i, s := range r.Service {
 			g.generateService(s, fmt.Sprintf("6,%d", i), ut)
+		}
+
+		ut = bt.E("ul")
+
+		sort.Slice(r.MessageType, func(i, j int) bool {
+			return r.MessageType[i].GetName() < r.MessageType[j].GetName()
+		})
+		for i, m := range r.MessageType {
+			g.generateMessage(r, "\t", fmt.Sprintf("4,%d", i), m, ut)
 		}
 
 		ut = bt.E("ul")
