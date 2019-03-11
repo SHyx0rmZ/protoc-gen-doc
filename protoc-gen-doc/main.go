@@ -44,29 +44,20 @@ func main() {
 
 		g := generator{new(bytes.Buffer), typeToFile, linkBase, nil}
 
-		d := &html.Node{
-			Type: html.DocumentNode,
+		rt := &generatorNode{
+			Node: &html.Node{
+				Type: html.DocumentNode,
+			},
 		}
-		d.AppendChild(&html.Node{
+		rt.AppendChild(&html.Node{
 			Type: html.DoctypeNode,
 			Data: "html",
 		})
-		//nh := &html.Node{
-		//	Type: html.ElementNode,
-		//	Data: "html",
-		//	Attr: []html.Attribute{
-		//		{
-		//			Key: "lang",
-		//			Val: "ja",
-		//		},
-		//	},
-		//}
-		//d.AppendChild(nh)
 
-		nh := (&generatorNode{d}).E("html", html.Attribute{Key: "lang", Val: "ja"}).E("head")
-		nh.E("meta", html.Attribute{Key: "charset", Val: "UTF-8"})
-		nh.E("title").T(prof)
-		nh.E("style").T(`
+		ht := rt.E("html", html.Attribute{Key: "lang", Val: "ja"}).E("head")
+		ht.E("meta", html.Attribute{Key: "charset", Val: "UTF-8"})
+		ht.E("title").T(prof)
+		ht.E("style").T(`
 details > summary {
 	list-style-image: url(/home/shyxormz/Desktop/未タイトルのフォルダ2/folder.svg);
 }
@@ -84,32 +75,32 @@ li > .file {
 	list-style-image: url(/home/shyxormz/Desktop/未タイトルのフォルダ2/application-x-yaml.svg);
 	margin-left: 80px;
 }`)
-		b := nh.E("body")
-		b.E("h1").T(prof)
+		bt := ht.E("body")
+		bt.E("h1").T(prof)
 
 		g.loadComments(r)
-		g.generateNavigation(request.ProtoFile, r.GetName(), b)
+		g.generateNavigation(request.ProtoFile, r.GetName(), bt)
 
-		u := b.E("ul")
+		ut := bt.E("ul")
 
 		for i, m := range r.MessageType {
-			g.generateMessage(r, "\t", fmt.Sprintf("4,%d", i), m, u)
+			g.generateMessage(r, "\t", fmt.Sprintf("4,%d", i), m, ut)
 		}
 
-		u = b.E("ul")
+		ut = bt.E("ul")
 
 		for i, s := range r.Service {
-			g.generateService(s, fmt.Sprintf("6,%d", i), u)
+			g.generateService(s, fmt.Sprintf("6,%d", i), ut)
 		}
 
-		u = b.E("ul")
+		ut = bt.E("ul")
 		for _, l := range r.SourceCodeInfo.Location {
-			u.T(fmt.Sprintf("%v%s", l.Path, l))
+			ut.T(fmt.Sprintf("%v%s", l.Path, l))
 		}
 
-		b.T(fmt.Sprintf("%#v\n\n%#v", r, typeToFile))
+		bt.T(fmt.Sprintf("%#v\n\n%#v", r, typeToFile))
 
-		err := html.Render(g, d)
+		err := html.Render(g, rt.Node)
 		if err != nil {
 			panic(err)
 		}
