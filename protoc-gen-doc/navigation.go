@@ -76,7 +76,7 @@ func (g *generator) generateNavigation(fs []*FileDescriptorProto, open string, n
 		sort.Strings(es)
 		for _, p := range es {
 			level := len(strings.Split(filepath.Dir(open), "/"))
-			ut.E("li").E("span").E("a", html.Attribute{
+			ut.E("li").E("span", html.Attribute{Key: "class", Val: "file"}).E("a", html.Attribute{
 				Key: "href", Val: fmt.Sprint(strings.Repeat("../", level), path, "/", strings.Replace(p, ".proto", ".html", 1)),
 			}).T(p)
 		}
