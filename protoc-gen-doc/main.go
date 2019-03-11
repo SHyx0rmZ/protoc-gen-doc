@@ -80,6 +80,10 @@ li > .file {
 	margin: 0 auto;
 }
 
+.comment {
+	color: green;
+}
+
 navbar {
 	float: left;
 }`)

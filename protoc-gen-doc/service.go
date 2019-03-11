@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	"golang.org/x/net/html"
 	"sort"
 	"strings"
 )
@@ -20,7 +21,7 @@ func (g *generator) generateService(s *ServiceDescriptorProto, path string, node
 		}
 		loc, ok := g.comment(fmt.Sprintf("%s,2,%d", path, i))
 		if ok {
-			pt.T("\t//", strings.Replace(strings.TrimSuffix(*loc.LeadingComments, "\n"), "\n", "\n\t//", -1), "\n")
+			pt.E("span", html.Attribute{Key: "class", Val: "comment"}).T("\t//", strings.Replace(strings.TrimSuffix(*loc.LeadingComments, "\n"), "\n", "\n\t//", -1), "\n")
 		}
 		pt.T("\trpc ", m.GetName(), "(")
 		if m.GetClientStreaming() {
