@@ -88,6 +88,14 @@ li > .file {
 	color: maroon;
 }
 
+.type {
+	color: darkorange;
+}
+
+.value {
+	color: navy;
+}
+
 navbar {
 	float: left;
 }`)

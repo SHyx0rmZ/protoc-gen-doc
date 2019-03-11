@@ -14,7 +14,7 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 
 	loc, ok := g.comment(path)
 	if ok {
-		pt.T("//", strings.Replace(strings.TrimSuffix(*loc.LeadingComments, "\n"), "\n", "\n//", -1), "\n")
+		pt.E("span", html.Attribute{Key: "class", Val: "comment"}).T("//", strings.Replace(strings.TrimSuffix(*loc.LeadingComments, "\n"), "\n", "\n//", -1), "\n")
 	}
 	pt.E("span", html.Attribute{Key: "class", Val: "keyword"}).T("message")
 	pt.T(" ", d.GetName(), " {\n")
@@ -56,19 +56,22 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 
 		loc, ok := g.comment(fmt.Sprintf("%s,2,%d", path, i))
 		if ok {
-			pt.T("//", strings.Replace(strings.Trim(*loc.LeadingComments, "\n"), "\n", "\n"+indent+"//", -1), "\n", indent)
+			pt.E("span", html.Attribute{Key: "class", Val: "comment"}).T("//", strings.Replace(strings.Trim(*loc.LeadingComments, "\n"), "\n", "\n"+indent+"//", -1), "\n", indent)
 		}
 
 		g.addTypeLink(pt, field)
 
-		pt.T(" ", field.GetName(), " = ", strconv.Itoa(int(field.GetNumber())))
+		pt.T(" ", field.GetName(), " = ")
+		pt.E("span", html.Attribute{Key: "class", Val: "value"}).T(strconv.Itoa(int(field.GetNumber())))
 
 		if field.Options != nil {
 			pt.T(" [\n")
 			if field.Options.GetDeprecated() {
 				pt.T(indent, "\t")
 				pt.E("span", html.Attribute{Key: "class", Val: "keyword"}).T("deprecated")
-				pt.T(" = true", "\n")
+				pt.T(" = ")
+				pt.E("span", html.Attribute{Key: "class", Val: "value"}).T(true)
+				pt.T("\n")
 			}
 			pt.T(indent, "];")
 		}
@@ -82,16 +85,16 @@ func (g *generator) addTypeLink(node *generatorNode, field *FieldDescriptorProto
 	tnp := strings.Split(field.GetTypeName(), ".")[1:]
 	switch len(tnp) {
 	case 0:
-		node.T(typeMap[field.GetType()])
+		node.E("span", html.Attribute{Key: "class", Val: "type"}).T(typeMap[field.GetType()])
 	case 1:
-		node.T(field.GetTypeName())
+		node.E("span", html.Attribute{Key: "class", Val: "type"}).T(field.GetTypeName())
 	default:
 		o := len(tnp) - 2
 		if o < 0 {
 			o = 0
 		}
 		tl := strings.Replace(g.typeToFile[field.GetTypeName()[1:]], ".proto", ".html", 1) + "#" + tnp[len(tnp)-1]
-		node.E("a", html.Attribute{Key: "href", Val: g.linkBase + tl}).T(strings.Join(tnp[o:], "."))
+		node.E("a", html.Attribute{Key: "href", Val: g.linkBase + tl}).E("span", html.Attribute{Key: "class", Val: "type"}).T(strings.Join(tnp[o:], "."))
 	}
 }
 
