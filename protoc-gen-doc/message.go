@@ -52,12 +52,16 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 
 	for i, field := range d.Field {
 
-		pt.T(indent)
-
 		loc, ok := g.comment(fmt.Sprintf("%s,2,%d", path, i))
 		if ok {
-			pt.E("span", html.Attribute{Key: "class", Val: "comment"}).T("//", strings.Replace(strings.Trim(*loc.LeadingComments, "\n"), "\n", "\n"+indent+"//", -1), "\n", indent)
+			if i != 0 {
+				pt.T("\n")
+			}
+			pt.T(indent)
+			pt.E("span", html.Attribute{Key: "class", Val: "comment"}).T("//", strings.Replace(strings.Trim(*loc.LeadingComments, "\n"), "\n", "\n"+indent+"//", -1), "\n")
 		}
+
+		pt.T(indent)
 
 		g.addTypeLink(pt, field)
 
@@ -76,7 +80,7 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 			pt.T(indent, "];")
 		}
 
-		pt.T("\n\n")
+		pt.T("\n")
 	}
 	pt.T(indent[:len(indent)-1], "}")
 }
