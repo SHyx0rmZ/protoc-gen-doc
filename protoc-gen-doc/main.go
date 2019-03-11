@@ -13,42 +13,6 @@ import (
 	"strings"
 )
 
-type generator struct {
-	*bytes.Buffer
-	typeToFile map[string]string
-	linkBase   string
-	comments   map[string][]*SourceCodeInfo_Location
-}
-
-func (g *generator) P(args ...string) {
-	for _, arg := range args {
-		g.WriteString(arg)
-	}
-}
-
-type generatorNode struct {
-	*html.Node
-}
-
-func (g *generatorNode) E(data string, attrs ...html.Attribute) *generatorNode {
-	node := &html.Node{
-		Type: html.ElementNode,
-		Data: data,
-		Attr: attrs,
-	}
-	g.AppendChild(node)
-	return &generatorNode{node}
-}
-
-func (g *generatorNode) T(data ...interface{}) *generatorNode {
-	node := &html.Node{
-		Type: html.TextNode,
-		Data: fmt.Sprint(data...),
-	}
-	g.AppendChild(node)
-	return &generatorNode{node}
-}
-
 func main() {
 	var request CodeGeneratorRequest
 
