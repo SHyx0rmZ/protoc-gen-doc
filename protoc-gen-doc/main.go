@@ -84,6 +84,10 @@ li > .file {
 	color: green;
 }
 
+.keyword {
+	color: maroon;
+}
+
 navbar {
 	float: left;
 }`)

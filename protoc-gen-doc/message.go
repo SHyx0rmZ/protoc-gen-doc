@@ -16,7 +16,8 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 	if ok {
 		pt.T("//", strings.Replace(strings.TrimSuffix(*loc.LeadingComments, "\n"), "\n", "\n//", -1), "\n")
 	}
-	pt.T("message ", d.GetName(), " {\n")
+	pt.E("span", html.Attribute{Key: "class", Val: "keyword"}).T("message")
+	pt.T(" ", d.GetName(), " {\n")
 
 	if len(d.NestedType) > 0 {
 		ut := pt.E("ul")
@@ -34,7 +35,9 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 				rs = append(rs, strconv.Itoa(int(*x.Start)))
 			}
 		}
-		pt.T(indent, "reserved ", strings.Join(rs, ", "), ";\n")
+		pt.T(indent)
+		pt.E("span", html.Attribute{Key: "class", Val: "keyword"}).T("reserved")
+		pt.T(" ", strings.Join(rs, ", "), ";\n")
 	}
 
 	if len(d.GetReservedName()) > 0 {
@@ -42,7 +45,9 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 		for _, x := range d.GetReservedName() {
 			rs = append(rs, `"`+x+`"`)
 		}
-		pt.T(indent, "reserved ", strings.Join(rs, ", "), ";\n")
+		pt.T(indent)
+		pt.E("span", html.Attribute{Key: "class", Val: "keyword"}).T("reserved")
+		pt.T(" ", strings.Join(rs, ", "), ";\n")
 	}
 
 	for i, field := range d.Field {
@@ -61,7 +66,9 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 		if field.Options != nil {
 			pt.T(" [\n")
 			if field.Options.GetDeprecated() {
-				pt.T(indent, "\t", "deprecated = true", "\n")
+				pt.T(indent, "\t")
+				pt.E("span", html.Attribute{Key: "class", Val: "keyword"}).T("deprecated")
+				pt.T(" = true", "\n")
 			}
 			pt.T(indent, "];")
 		}
