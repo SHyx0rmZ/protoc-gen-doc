@@ -98,6 +98,7 @@ li > .file {
 
 navbar {
 	float: left;
+	position: fixed;
 }`)
 		bt := ht.E("body")
 
