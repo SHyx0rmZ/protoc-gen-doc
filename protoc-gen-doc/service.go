@@ -22,11 +22,13 @@ func (g *generator) generateService(s *ServiceDescriptorProto, path string, node
 		if m.GetClientStreaming() {
 			pt.T("stream ")
 		}
-		pt.T(normalizeTypeName(&FieldDescriptorProto{TypeName: proto.String(m.GetInputType())}), ") returns (")
+		g.addTypeLink(pt, &FieldDescriptorProto{TypeName: proto.String(m.GetInputType())})
+		pt.T(") returns (")
 		if m.GetServerStreaming() {
 			pt.T("stream ")
 		}
-		pt.T(normalizeTypeName(&FieldDescriptorProto{TypeName: proto.String(m.GetOutputType())}), ")")
+		g.addTypeLink(pt, &FieldDescriptorProto{TypeName: proto.String(m.GetOutputType())})
+		pt.T(")")
 		if m.Options != nil {
 			pt.T(" {\n")
 			if m.Options.GetDeprecated() {
