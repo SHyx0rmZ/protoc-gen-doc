@@ -54,7 +54,7 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 			pt.T("//", strings.Replace(strings.Trim(*loc.LeadingComments, "\n"), "\n", "\n"+indent+"//", -1), "\n", indent)
 		}
 
-		pt.T(normalizeTypeName(field))
+		g.addTypeLink(pt, field)
 
 		//if len(field.GetTypeName()) == 0 {
 		//	g.P(fmt.Sprintf("%T %#v", field.GetType(), field.GetType()))
@@ -75,14 +75,30 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 	pt.T(indent[:len(indent)-1], "}")
 }
 
+func (g *generator) addTypeLink(node *generatorNode, field *FieldDescriptorProto) {
+	tnp := strings.Split(field.GetTypeName(), ".")[1:]
+	switch len(tnp) {
+	case 0:
+		node.T(typeMap[field.GetType()])
+	case 1:
+		node.T(field.GetTypeName())
+	default:
+		o := len(tnp) - 2
+		if o < 0 {
+			o = 0
+		}
+		tl := strings.Replace(g.typeToFile[field.GetTypeName()[1:]], ".proto", ".html", 1) + "#" + tnp[len(tnp)-1]
+		node.E("a", html.Attribute{Key: "href", Val: g.linkBase + tl}).T(strings.Join(tnp[o:], "."))
+	}
+}
+
 func normalizeTypeName(field *FieldDescriptorProto) string {
-	tn := field.GetTypeName()
-	tnp := strings.Split(tn, ".")[1:]
+	tnp := strings.Split(field.GetTypeName(), ".")[1:]
 	switch len(tnp) {
 	case 0:
 		return typeMap[field.GetType()]
 	case 1:
-		return tn
+		return field.GetTypeName()
 	default:
 		o := len(tnp) - 2
 		if o < 0 {
