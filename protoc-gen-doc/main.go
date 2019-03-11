@@ -72,12 +72,23 @@ li > .file {
 	display: list-item;
 	list-style-image: url(/home/shyxormz/Desktop/未タイトルのフォルダ2/application-x-yaml.svg);
 	margin-left: 80px;
+}
+
+.container {
+	max-width: 60em;
+	margin: 0 auto;
+}
+
+navbar {
+	float: left;
 }`)
 		bt := ht.E("body")
-		bt.E("h1").T(prof)
 
 		g.loadComments(r)
-		g.generateNavigation(request.ProtoFile, r.GetName(), bt)
+		g.generateNavigation(request.ProtoFile, r.GetName(), bt.E("navbar"))
+
+		bt = bt.E("div", html.Attribute{Key: "class", Val: "container"})
+		bt.E("h1").T(prof)
 
 		ut := bt.E("ul")
 
