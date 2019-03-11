@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/golang/protobuf/proto"
 	"strings"
 )
 
@@ -21,11 +22,11 @@ func (g *generator) generateService(s *ServiceDescriptorProto, path string, node
 		if m.GetClientStreaming() {
 			pt.T("stream ")
 		}
-		pt.T(m.GetInputType(), ") returns (")
+		pt.T(normalizeTypeName(&FieldDescriptorProto{TypeName: proto.String(m.GetInputType())}), ") returns (")
 		if m.GetServerStreaming() {
 			pt.T("stream ")
 		}
-		pt.T(m.GetOutputType(), ")")
+		pt.T(normalizeTypeName(&FieldDescriptorProto{TypeName: proto.String(m.GetOutputType())}), ")")
 		if m.Options != nil {
 			pt.T(" {\n")
 			if m.Options.GetDeprecated() {

@@ -54,25 +54,7 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 			pt.T("//", strings.Replace(strings.Trim(*loc.LeadingComments, "\n"), "\n", "\n"+indent+"//", -1), "\n", indent)
 		}
 
-		tn := field.GetTypeName()
-		tnp := strings.Split(tn, ".")[1:]
-		if len(tnp) > 1 {
-			o := len(tnp) - 2
-			if o < 0 {
-				o = 0
-			}
-			tn = strings.Join(tnp[o:], ".")
-			//tl := strings.Replace(strings.Join(tnp[:len(tnp)-1], "/"), ".proto", ".html", 1) + "#" + tnp[len(tnp)-1]
-			tl := strings.Replace(g.typeToFile[field.GetTypeName()[1:]], ".proto", ".html", 1) + "#" + tnp[len(tnp)-1]
-
-			pt.E("a", html.Attribute{Key: "href", Val: g.linkBase + tl}).T(tn)
-		} else {
-			if len(tn) == 0 {
-				pt.T(typeMap[field.GetType()])
-			} else {
-				pt.T(tn)
-			}
-		}
+		pt.T(normalizeTypeName(field))
 
 		//if len(field.GetTypeName()) == 0 {
 		//	g.P(fmt.Sprintf("%T %#v", field.GetType(), field.GetType()))
@@ -91,4 +73,21 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 		pt.T("\n\n")
 	}
 	pt.T(indent[:len(indent)-1], "}")
+}
+
+func normalizeTypeName(field *FieldDescriptorProto) string {
+	tn := field.GetTypeName()
+	tnp := strings.Split(tn, ".")[1:]
+	switch len(tnp) {
+	case 0:
+		return typeMap[field.GetType()]
+	case 1:
+		return tn
+	default:
+		o := len(tnp) - 2
+		if o < 0 {
+			o = 0
+		}
+		return strings.Join(tnp[o:], ".")
+	}
 }
