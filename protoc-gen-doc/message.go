@@ -56,10 +56,6 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 
 		g.addTypeLink(pt, field)
 
-		//if len(field.GetTypeName()) == 0 {
-		//	g.P(fmt.Sprintf("%T %#v", field.GetType(), field.GetType()))
-		//}
-		//
 		pt.T(" ", field.GetName(), " = ", strconv.Itoa(int(field.GetNumber())))
 
 		if field.Options != nil {

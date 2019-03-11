@@ -16,7 +16,6 @@ func (g *generator) loadComments(f *FileDescriptorProto) {
 			p = append(p, strconv.Itoa(int(n)))
 		}
 		path := strings.Join(p, ",")
-		//g.P("- ", path, loc.String(), "\n")
 		g.comments[path] = append(g.comments[path], loc)
 	}
 }
