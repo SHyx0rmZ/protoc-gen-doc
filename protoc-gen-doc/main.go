@@ -96,7 +96,7 @@ li > .file {
 			ut.T(fmt.Sprintf("%v%s", l.Path, l))
 		}
 
-		bt.T(fmt.Sprintf("%#v\n\n%#v", r, typeToFile))
+		bt.E("p").T(fmt.Sprintf("%#v\n\n%#v", r, typeToFile))
 
 		err := html.Render(g, rt.Node)
 		if err != nil {
