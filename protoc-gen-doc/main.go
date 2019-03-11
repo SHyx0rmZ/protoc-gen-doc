@@ -26,6 +26,29 @@ func (g *generator) P(args ...string) {
 	}
 }
 
+type generatorNode struct {
+	*html.Node
+}
+
+func (g *generatorNode) E(data string, attrs ...html.Attribute) *generatorNode {
+	node := &html.Node{
+		Type: html.ElementNode,
+		Data: data,
+		Attr: attrs,
+	}
+	g.AppendChild(node)
+	return &generatorNode{node}
+}
+
+func (g *generatorNode) T(data ...interface{}) *generatorNode {
+	node := &html.Node{
+		Type: html.TextNode,
+		Data: fmt.Sprint(data...),
+	}
+	g.AppendChild(node)
+	return &generatorNode{node}
+}
+
 func main() {
 	var request CodeGeneratorRequest
 
@@ -64,36 +87,22 @@ func main() {
 			Type: html.DoctypeNode,
 			Data: "html",
 		})
-		nh := &html.Node{
-			Type: html.ElementNode,
-			Data: "html",
-			Attr: []html.Attribute{
-				{
-					Key: "lang",
-					Val: "ja",
-				},
-			},
-		}
-		d.AppendChild(nh)
-		nh.AppendChild(&html.Node{
-			Type: html.ElementNode,
-			Data: "head",
-		})
-		nh.LastChild.AppendChild(&html.Node{
-			Type: html.ElementNode,
-			Data: "title",
-		})
-		nh.LastChild.LastChild.AppendChild(&html.Node{
-			Type: html.TextNode,
-			Data: prof,
-		})
-		nh.LastChild.AppendChild(&html.Node{
-			Type: html.ElementNode,
-			Data: "style",
-		})
-		nh.LastChild.LastChild.AppendChild(&html.Node{
-			Type: html.TextNode,
-			Data: `
+		//nh := &html.Node{
+		//	Type: html.ElementNode,
+		//	Data: "html",
+		//	Attr: []html.Attribute{
+		//		{
+		//			Key: "lang",
+		//			Val: "ja",
+		//		},
+		//	},
+		//}
+		//d.AppendChild(nh)
+
+		nh := (&generatorNode{d}).E("html", html.Attribute{Key: "lang", Val: "ja"}).E("head")
+		nh.E("meta", html.Attribute{Key: "charset", Val: "UTF-8"})
+		nh.E("title").T(prof)
+		nh.E("style").T(`
 details > summary {
 	list-style-image: url(/home/shyxormz/Desktop/未タイトルのフォルダ2/folder.svg);
 }
@@ -110,57 +119,31 @@ li > .file {
 	display: list-item;
 	list-style-image: url(/home/shyxormz/Desktop/未タイトルのフォルダ2/application-x-yaml.svg);
 	margin-left: 80px;
-}`,
-		})
-		nh.AppendChild(&html.Node{
-			Type: html.ElementNode,
-			Data: "body",
-		})
-		nh.LastChild.AppendChild(&html.Node{
-			Type: html.ElementNode,
-			Data: "h1",
-		})
-		nh.LastChild.LastChild.AppendChild(&html.Node{
-			Type: html.TextNode,
-			Data: prof,
-		})
+}`)
+		b := nh.E("body")
+		b.E("h1").T(prof)
 
 		g.loadComments(r)
-		g.generateNavigation(request.ProtoFile, r.GetName(), nh.LastChild)
+		g.generateNavigation(request.ProtoFile, r.GetName(), b)
 
-		nh.LastChild.AppendChild(&html.Node{
-			Type: html.ElementNode,
-			Data: "ul",
-		})
+		u := b.E("ul")
 
 		for i, m := range r.MessageType {
-			g.generateMessage(r, "\t", fmt.Sprintf("4,%d", i), m, nh.LastChild.LastChild)
+			g.generateMessage(r, "\t", fmt.Sprintf("4,%d", i), m, u)
 		}
 
-		nh.LastChild.AppendChild(&html.Node{
-			Type: html.ElementNode,
-			Data: "ul",
-		})
+		u = b.E("ul")
 
 		for i, s := range r.Service {
-			g.generateService(s, fmt.Sprintf("6,%d", i), nh.LastChild.LastChild)
+			g.generateService(s, fmt.Sprintf("6,%d", i), u)
 		}
 
-		nh.LastChild.AppendChild(&html.Node{
-			Type: html.ElementNode,
-			Data: "ul",
-		})
+		u = b.E("ul")
 		for _, l := range r.SourceCodeInfo.Location {
-			nh.LastChild.LastChild.AppendChild(&html.Node{
-				Type: html.TextNode,
-				Data: fmt.Sprintf("%v%s", l.Path, l),
-			})
+			u.T(fmt.Sprintf("%v%s", l.Path, l))
 		}
 
-		nh.LastChild.AppendChild(&html.Node{
-			Type: html.TextNode,
-			Data: fmt.Sprintf("%#v\n\n%#v", r, typeToFile),
-		})
+		b.T(fmt.Sprintf("%#v\n\n%#v", r, typeToFile))
 
 		err := html.Render(g, d)
 		if err != nil {
@@ -186,87 +169,37 @@ li > .file {
 	}
 }
 
-func (g *generator) generateService(s *ServiceDescriptorProto, path string, node *html.Node) {
-	node.AppendChild(&html.Node{
-		Type: html.ElementNode,
-		Data: "li",
-	})
-	node.LastChild.AppendChild(&html.Node{
-		Type: html.ElementNode,
-		Data: "code",
-	})
-	node.LastChild.LastChild.AppendChild(&html.Node{
-		Type: html.ElementNode,
-		Data: "pre",
-	})
-	node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-		Type: html.TextNode,
-		Data: "service " + s.GetName() + " {\n",
-	})
+func (g *generator) generateService(s *ServiceDescriptorProto, path string, node *generatorNode) {
+	pt := node.E("li").E("code").E("pre")
+	pt.T("service ", s.GetName(), " {\n")
 
 	for i, m := range s.GetMethod() {
 		if i != 0 {
-			node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-				Type: html.TextNode,
-				Data: "\n",
-			})
+			pt.T("\n")
 		}
 		loc, ok := g.comment(fmt.Sprintf("%s,2,%d", path, i))
 		if ok {
-			node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-				Type: html.TextNode,
-				Data: "\t//" + strings.Replace(strings.TrimSuffix(*loc.LeadingComments, "\n"), "\n", "\n\t//", -1) + "\n",
-			})
+			pt.T("\t//", strings.Replace(strings.TrimSuffix(*loc.LeadingComments, "\n"), "\n", "\n\t//", -1), "\n")
 		}
-		node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-			Type: html.TextNode,
-			Data: "\trpc " + m.GetName() + "(",
-		})
+		pt.T("\trpc", m.GetName(), "(")
 		if m.GetClientStreaming() {
-			node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-				Type: html.TextNode,
-				Data: "stream ",
-			})
+			pt.T("stream ")
 		}
-		node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-			Type: html.TextNode,
-			Data: m.GetInputType() + ") returns (",
-		})
+		pt.T(") returns (")
 		if m.GetServerStreaming() {
-			node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-				Type: html.TextNode,
-				Data: "stream ",
-			})
+			pt.T("stream ")
 		}
-		node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-			Type: html.TextNode,
-			Data: ")",
-		})
+		pt.T(")")
 		if m.Options != nil {
-			node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-				Type: html.TextNode,
-				Data: " {\n",
-			})
+			pt.T(" {\n")
 			if m.Options.GetDeprecated() {
-				node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-					Type: html.TextNode,
-					Data: "\t\toption deprecated = true;\n",
-				})
+				pt.T("\t\t", "option deprecated = true", ";\n")
 			}
-			node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-				Type: html.TextNode,
-				Data: "\t}",
-			})
+			pt.T("\t}")
 		}
-		node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-			Type: html.TextNode,
-			Data: ";\n",
-		})
+		pt.T(";\n")
 	}
-	node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-		Type: html.TextNode,
-		Data: "}",
-	})
+	pt.T("}")
 }
 
 var typeMap = map[FieldDescriptorProto_Type]string{
@@ -295,7 +228,7 @@ var typeMap = map[FieldDescriptorProto_Type]string{
 	FieldDescriptorProto_TYPE_SINT64:   "sint64",
 }
 
-func (g *generator) generateNavigation(fs []*FileDescriptorProto, open string, node *html.Node) {
+func (g *generator) generateNavigation(fs []*FileDescriptorProto, open string, node *generatorNode) {
 	type directory struct {
 		directories map[string]*directory
 		entries     map[string]struct{}
@@ -338,42 +271,23 @@ func (g *generator) generateNavigation(fs []*FileDescriptorProto, open string, n
 		parent.open = true
 	}
 
-	var generate func(*directory, string, *html.Node)
-	generate = func(d *directory, path string, node *html.Node) {
-		node.AppendChild(&html.Node{
-			Type: html.ElementNode,
-			Data: "ul",
-		})
+	var attr = []html.Attribute{{Key: "open", Val: "open"}}
+
+	var generate func(*directory, string, *generatorNode)
+	generate = func(d *directory, path string, node *generatorNode) {
+		ut := node.E("ul")
 		var ds []string
 		for p := range d.directories {
 			ds = append(ds, p)
 		}
 		sort.Strings(ds)
 		for _, p := range ds {
-			node.LastChild.AppendChild(&html.Node{
-				Type: html.ElementNode,
-				Data: "li",
-			})
-			node.LastChild.LastChild.AppendChild(&html.Node{
-				Type: html.ElementNode,
-				Data: "details",
-			})
+			dt := ut.E("li").E("details")
 			if d.directories[p].open {
-				node.LastChild.LastChild.LastChild.Attr = []html.Attribute{{Key: "open", Val: "open"}}
+				dt.Attr = attr
 			}
-			node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-				Type: html.ElementNode,
-				Data: "summary",
-			})
-			node.LastChild.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-				Type: html.TextNode,
-				Data: p,
-			})
-			node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-				Type: html.ElementNode,
-				Data: "div",
-			})
-			generate(d.directories[p], filepath.Join(path, p), node.LastChild.LastChild.LastChild.LastChild)
+			dt.E("summary").T(p)
+			generate(d.directories[p], filepath.Join(path, p), dt.E("div"))
 		}
 		var es []string
 		for p := range d.entries {
@@ -381,34 +295,10 @@ func (g *generator) generateNavigation(fs []*FileDescriptorProto, open string, n
 		}
 		sort.Strings(es)
 		for _, p := range es {
-			node.LastChild.AppendChild(&html.Node{
-				Type: html.ElementNode,
-				Data: "li",
-			})
-			node.LastChild.LastChild.AppendChild(&html.Node{
-				Type: html.ElementNode,
-				Data: "span",
-				Attr: []html.Attribute{
-					{
-						Key: "class",
-						Val: "file",
-					},
-				},
-			})
-			node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-				Type: html.ElementNode,
-				Data: "a",
-				Attr: []html.Attribute{
-					{
-						Key: "href",
-						Val: strings.Repeat("../", len(strings.Split(filepath.Dir(open), "/"))) + path + "/" + strings.Replace(p, ".proto", ".html", 1),
-					},
-				},
-			})
-			node.LastChild.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-				Type: html.TextNode,
-				Data: p,
-			})
+			level := len(strings.Split(filepath.Dir(open), "/"))
+			ut.E("li").E("span").E("a", html.Attribute{
+				Key: "href", Val: fmt.Sprint(strings.Repeat("../", level), path, "/", strings.Replace(p, ".proto", ".html", 1)),
+			}).T(p)
 		}
 	}
 
@@ -439,47 +329,21 @@ func (g *generator) comment(path string) (*SourceCodeInfo_Location, bool) {
 	return locs[0], true
 }
 
-func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string, d *DescriptorProto, node *html.Node) {
+func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string, d *DescriptorProto, node *generatorNode) {
 	indent = "\t"
 
-	node.AppendChild(&html.Node{
-		Type: html.ElementNode,
-		Data: "li",
-		Attr: []html.Attribute{
-			{
-				Key: "id",
-				Val: d.GetName(),
-			},
-		},
-	})
-	node.LastChild.AppendChild(&html.Node{
-		Type: html.ElementNode,
-		Data: "code",
-	})
-	node.LastChild.LastChild.AppendChild(&html.Node{
-		Type: html.ElementNode,
-		Data: "pre",
-	})
+	pt := node.E("li", html.Attribute{Key: "id", Val: d.GetName()}).E("code").E("pre")
 
 	loc, ok := g.comment(path)
 	if ok {
-		node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-			Type: html.TextNode,
-			Data: "//" + strings.Replace(strings.TrimSuffix(*loc.LeadingComments, "\n"), "\n", "\n//", -1) + "\n",
-		})
+		pt.T("//", strings.Replace(strings.TrimSuffix(*loc.LeadingComments, "\n"), "\n", "\n//", -1), "\n")
 	}
-	node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-		Type: html.TextNode,
-		Data: "message " + d.GetName() + " {\n",
-	})
+	pt.T("message ", d.GetName(), " {\n")
 
 	if len(d.NestedType) > 0 {
-		node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-			Type: html.ElementNode,
-			Data: "ul",
-		})
+		ut := pt.E("ul")
 		for i, message := range d.NestedType {
-			g.generateMessage(f, indent+"\t", fmt.Sprintf("%s,3,%d", path, i), message, node.LastChild.LastChild.LastChild.LastChild)
+			g.generateMessage(f, indent+"\t", fmt.Sprintf("%s,3,%d", path, i), message, ut)
 		}
 	}
 
@@ -492,10 +356,7 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 				rs = append(rs, strconv.Itoa(int(*x.Start)))
 			}
 		}
-		node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-			Type: html.TextNode,
-			Data: indent + "reserved " + strings.Join(rs, ", ") + ";\n",
-		})
+		pt.T(indent, "reserved ", strings.Join(rs, ", "), ";\n")
 	}
 
 	if len(d.GetReservedName()) > 0 {
@@ -503,26 +364,16 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 		for _, x := range d.GetReservedName() {
 			rs = append(rs, `"`+x+`"`)
 		}
-		node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-			Type: html.TextNode,
-			Data: indent + "reserved " + strings.Join(rs, ", ") + ";\n",
-		})
+		pt.T(indent, "reserved ", strings.Join(rs, ", "), ";\n")
 	}
 
 	for i, field := range d.Field {
 
-		node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-			Type: html.TextNode,
-			Data: indent,
-		})
+		pt.T(indent)
 
 		loc, ok := g.comment(fmt.Sprintf("%s,2,%d", path, i))
 		if ok {
-			node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-				Type: html.TextNode,
-				Data: "//" + strings.Replace(strings.Trim(*loc.LeadingComments, "\n"), "\n", "\n"+indent+"//", -1) + "\n" + indent,
-			})
-
+			pt.T("//", strings.Replace(strings.Trim(*loc.LeadingComments, "\n"), "\n", "\n"+indent+"//", -1), "\n", indent)
 		}
 
 		tn := field.GetTypeName()
@@ -536,31 +387,12 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 			//tl := strings.Replace(strings.Join(tnp[:len(tnp)-1], "/"), ".proto", ".html", 1) + "#" + tnp[len(tnp)-1]
 			tl := strings.Replace(g.typeToFile[field.GetTypeName()[1:]], ".proto", ".html", 1) + "#" + tnp[len(tnp)-1]
 
-			node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-				Type: html.ElementNode,
-				Data: "a",
-				Attr: []html.Attribute{
-					{
-						Key: "href",
-						Val: g.linkBase + tl,
-					},
-				},
-			})
-			node.LastChild.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-				Type: html.TextNode,
-				Data: tn,
-			})
+			pt.E("a", html.Attribute{Key: "href", Val: g.linkBase + tl}).T(tn)
 		} else {
 			if len(tn) == 0 {
-				node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-					Type: html.TextNode,
-					Data: typeMap[field.GetType()],
-				})
+				pt.T(typeMap[field.GetType()])
 			} else {
-				node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-					Type: html.TextNode,
-					Data: tn,
-				})
+				pt.T(tn)
 			}
 		}
 
@@ -568,37 +400,19 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 		//	g.P(fmt.Sprintf("%T %#v", field.GetType(), field.GetType()))
 		//}
 		//
-		node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-			Type: html.TextNode,
-			Data: " " + field.GetName() + " = " + strconv.Itoa(int(field.GetNumber())),
-		})
+		pt.T(" ", field.GetName(), " = ", strconv.Itoa(int(field.GetNumber())))
 
 		if field.Options != nil {
-			node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-				Type: html.TextNode,
-				Data: " [\n",
-			})
+			pt.T(" [\n")
 			if field.Options.GetDeprecated() {
-				node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-					Type: html.TextNode,
-					Data: indent + "\tdeprecated = true\n",
-				})
+				pt.T(indent, "\t", "deprecated = true", "\n")
 			}
-			node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-				Type: html.TextNode,
-				Data: indent + "];",
-			})
+			pt.T(indent, "];")
 		}
 
-		node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-			Type: html.TextNode,
-			Data: "\n\n",
-		})
+		pt.T("\n\n")
 	}
-	node.LastChild.LastChild.LastChild.AppendChild(&html.Node{
-		Type: html.TextNode,
-		Data: indent[:len(indent)-1] + "}",
-	})
+	pt.T(indent[:len(indent)-1], "}")
 }
 
 //func (g *generator)
