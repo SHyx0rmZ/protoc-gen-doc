@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	"sort"
 	"strings"
 )
 
@@ -10,6 +11,9 @@ func (g *generator) generateService(s *ServiceDescriptorProto, path string, node
 	pt := node.E("li").E("code").E("pre")
 	pt.T("service ", s.GetName(), " {\n")
 
+	sort.Slice(s.GetMethod(), func(i, j int) bool {
+		return s.GetMethod()[i].GetName() < s.GetMethod()[j].GetName()
+	})
 	for i, m := range s.GetMethod() {
 		if i != 0 {
 			pt.T("\n")
