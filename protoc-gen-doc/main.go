@@ -93,6 +93,7 @@ details[open] > summary {
 
 li {
 	list-style: none;
+	white-space: nowrap;
 }
 
 li > .file {
@@ -146,7 +147,7 @@ navbar {
 		bt = bt.E("div", html.Attribute{Key: "class", Val: "container"})
 		bt.E("h1").T(prof)
 
-		ut := bt.E("ul")
+		ot := bt.E("ol")
 
 		var ss []struct {
 			Service *ServiceDescriptorProto
@@ -165,10 +166,8 @@ navbar {
 			return ss[i].Service.GetName() < ss[j].Service.GetName()
 		})
 		for _, s := range ss {
-			g.generateService(s.Service, fmt.Sprintf("6,%d", s.Index), ut)
+			g.generateService(s.Service, fmt.Sprintf("6,%d", s.Index), ot.E("li", html.Attribute{Key: "class", Val: "struct"}))
 		}
-
-		ut = bt.E("ul")
 
 		var es []struct {
 			Enum  *EnumDescriptorProto
@@ -187,7 +186,7 @@ navbar {
 			return es[i].Enum.GetName() < es[j].Enum.GetName()
 		})
 		for _, e := range es {
-			g.generateEnum("", fmt.Sprintf("5,%d", e.Index), e.Enum, ut.E("li", html.Attribute{Key: "class", Val: "struct"}))
+			g.generateEnum("", fmt.Sprintf("5,%d", e.Index), e.Enum, ot.E("li", html.Attribute{Key: "class", Val: "struct"}))
 		}
 
 		var ms []struct {
@@ -207,7 +206,7 @@ navbar {
 			return ms[i].Message.GetName() < ms[j].Message.GetName()
 		})
 		for _, m := range ms {
-			g.generateMessage(r, "\t", fmt.Sprintf("4,%d", m.Index), m.Message, ut.E("li", html.Attribute{Key: "class", Val: "struct"}))
+			g.generateMessage(r, "\t", fmt.Sprintf("4,%d", m.Index), m.Message, ot.E("li", html.Attribute{Key: "class", Val: "struct"}))
 		}
 
 		err := html.Render(g, rt.Node)

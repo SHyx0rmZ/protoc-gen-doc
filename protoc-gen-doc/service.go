@@ -5,48 +5,65 @@ import (
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/html"
 	"sort"
-	"strings"
 )
 
 func (g *generator) generateService(s *ServiceDescriptorProto, path string, node *generatorNode) {
-	pt := node.E("li").E("code").E("pre")
-	pt.E("span", html.Attribute{Key: "class", Val: "keyword"}, html.Attribute{Key: "id", Val: s.GetName()}).T("service")
-	pt.T(" ", s.GetName(), " {\n")
+	g.generateLeadingComments(path, node)
+	node.E("span", html.Attribute{Key: "class", Val: "keyword"}, html.Attribute{Key: "id", Val: s.GetName()}).T("service")
+	node.T(" ", s.GetName(), " {")
+	ot := node.E("ol")
 
-	sort.Slice(s.GetMethod(), func(i, j int) bool {
-		return s.GetMethod()[i].GetName() < s.GetMethod()[j].GetName()
-	})
-	for i, m := range s.GetMethod() {
-		if i != 0 {
-			pt.T("\n")
-		}
-		loc, ok := g.comment(fmt.Sprintf("%s,2,%d", path, i))
-		if ok {
-			pt.E("span", html.Attribute{Key: "class", Val: "comment"}).T("\t//", strings.Replace(strings.TrimSuffix(*loc.LeadingComments, "\n"), "\n", "\n\t//", -1), "\n")
-		}
-		pt.T("\t")
-		pt.E("span", html.Attribute{Key: "class", Val: "keyword"}).T("rpc")
-		pt.T(" ", m.GetName(), "(")
-		if m.GetClientStreaming() {
-			pt.E("span", html.Attribute{Key: "class", Val: "keyword"}).T("stream")
-			pt.T(" ")
-		}
-		g.addTypeLink(pt, &FieldDescriptorProto{TypeName: proto.String(m.GetInputType())})
-		pt.T(") returns (")
-		if m.GetServerStreaming() {
-			pt.E("span", html.Attribute{Key: "class", Val: "keyword"}).T("stream")
-			pt.T(" ")
-		}
-		g.addTypeLink(pt, &FieldDescriptorProto{TypeName: proto.String(m.GetOutputType())})
-		pt.T(")")
-		if m.Options != nil {
-			pt.T(" {\n")
-			if m.Options.GetDeprecated() {
-				pt.T("\t\t", "option deprecated = true", ";\n")
-			}
-			pt.T("\t}")
-		}
-		pt.T(";\n")
+	var ms []struct {
+		Method *MethodDescriptorProto
+		Index  int
 	}
-	pt.T("}")
+	for i, m := range s.GetMethod() {
+		ms = append(ms, struct {
+			Method *MethodDescriptorProto
+			Index  int
+		}{
+			Method: m,
+			Index:  i,
+		})
+	}
+	sort.Slice(ms, func(i, j int) bool {
+		return ms[i].Method.GetName() < ms[j].Method.GetName()
+	})
+	for _, m := range ms {
+		g.generateMethod(fmt.Sprintf("%s,%d,%d", path, 2, m.Index), m.Method, ot.E("li"))
+	}
+	node.T("}")
+	g.generateTrailingComments(path, node)
+}
+
+func (g *generator) generateMethod(path string, m *MethodDescriptorProto, node *generatorNode) {
+	g.generateLeadingComments(path, node)
+	node.E("span", html.Attribute{Key: "class", Val: "keyword"}).T("rpc")
+	node.T(" ", m.GetName(), "(")
+	if m.GetClientStreaming() {
+		node.E("span", html.Attribute{Key: "class", Val: "keyword"}).T("stream")
+		node.T(" ")
+	}
+	g.addTypeLink(node, &FieldDescriptorProto{TypeName: proto.String(m.GetInputType())})
+	node.T(") returns (")
+	if m.GetServerStreaming() {
+		node.E("span", html.Attribute{Key: "class", Val: "keyword"}).T("stream")
+		node.T(" ")
+	}
+	g.addTypeLink(node, &FieldDescriptorProto{TypeName: proto.String(m.GetOutputType())})
+	node.T(")")
+	if m.Options != nil {
+		node.T(" {")
+		ut := node.E("ul")
+		if m.Options.GetDeprecated() {
+			lt := ut.E("li")
+			lt.E("span", html.Attribute{Key: "class", Val: "keyword"}).T("option")
+			lt.T(" ", "deprecated", " = ")
+			lt.E("span", html.Attribute{Key: "class", Val: "value"}).T("true")
+			lt.T(";")
+		}
+		node.T("}")
+	}
+	node.T(";")
+	g.generateTrailingComments(path, node)
 }
