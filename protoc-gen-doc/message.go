@@ -198,16 +198,13 @@ func (g *generator) generateEnum(indent, path string, enum *EnumDescriptorProto,
 	node.T(" ", enum.GetName(), " {")
 	ut := node.E("ul").E("li").E("table")
 	for i, v := range enum.GetValue() {
-		g.generateComment(fmt.Sprintf("%s,%d,%d", path, 2, i), ut.E("tr", html.Attribute{Key: "colspan", Val: "3"}).E("td"))
+		g.generateComment(fmt.Sprintf("%s,%d,%d", path, 2, i), ut.E("tr").E("td", html.Attribute{Key: "colspan", Val: "3"}))
 		node := ut.E("tr")
 		node.E("td").T(v.GetName())
-		//node.T(v.GetName(), " = ")
 		node.E("td").T(" = ")
 		vt := node.E("td", html.Attribute{Key: "text-align", Val: "right"})
 		vt.E("span", html.Attribute{Key: "class", Val: "value"}).T(v.GetNumber())
 		vt.T(";")
-		//node.E("span", html.Attribute{Key: "class", Val: "value"}).T(v.GetNumber())
-		//node.T(";")
 		// todo: options
 	}
 	node.T("}")
