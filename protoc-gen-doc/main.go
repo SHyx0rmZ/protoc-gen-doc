@@ -92,6 +92,14 @@ li:first-child > .comment {
 	margin-top: 0;
 }
 
+.struct {
+	margin-top: 1em;
+}
+
+.struct:first-child {
+	margin-top: 0;
+}
+
 .keyword {
 	color: maroon;
 }
@@ -157,7 +165,7 @@ navbar {
 			return ms[i].Message.GetName() < ms[j].Message.GetName()
 		})
 		for _, m := range ms {
-			g.generateMessage(r, "\t", fmt.Sprintf("4,%d", m.Index), m.Message, ut.E("li"))
+			g.generateMessage(r, "\t", fmt.Sprintf("4,%d", m.Index), m.Message, ut.E("li", html.Attribute{Key: "class", Val: "struct"}))
 		}
 
 		err := html.Render(g, rt.Node)

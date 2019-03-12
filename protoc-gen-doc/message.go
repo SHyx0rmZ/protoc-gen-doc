@@ -103,7 +103,6 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 		}
 		return ci.Type < cj.Type
 	})
-	ot := node.E("ol")
 	//for i, c := range chs {
 	//	v, ok := c.Data.(string)
 	//	if !ok {
@@ -115,7 +114,7 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 	g.generateComment(path, node)
 	node.E("span", html.Attribute{Key: "class", Val: "keyword"}, html.Attribute{Key: "id", Val: d.GetName()}).T("message")
 	node.T(" ", d.GetName(), " {")
-	ot = node.E("ol")
+	ot := node.E("ol")
 	s := make(map[*FieldDescriptorProto]struct{})
 	for _, c := range chs {
 		switch v := c.Data.(type) {
@@ -138,11 +137,11 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 			}
 			lt.T("}")
 		case *EnumDescriptorProto:
-			g.generateEnum(indent, c.Path, v, ot.E("li"))
+			g.generateEnum(indent, c.Path, v, ot.E("li", html.Attribute{Key: "class", Val: "struct"}))
 		case *DescriptorProto_ReservedRange:
 			g.generateReservedRange(c.Path, v, ot.E("li"))
 		case *DescriptorProto:
-			g.generateMessage(f, indent, c.Path, v, ot.E("li"))
+			g.generateMessage(f, indent, c.Path, v, ot.E("li", html.Attribute{Key: "class", Val: "struct"}))
 		case string:
 			g.generateReservedName(c.Path, v, ot.E("li"))
 		default:
@@ -194,7 +193,7 @@ func (g *generator) generateField(path string, field *FieldDescriptorProto, node
 
 func (g *generator) generateEnum(indent, path string, enum *EnumDescriptorProto, node *generatorNode) {
 	g.generateComment(path, node)
-	node.E("span", html.Attribute{Key: "class", Val: "keyword"}, html.Attribute{Key: "id", Val: enum.GetName()}).T("enum")
+	node.E("span", html.Attribute{Key: "class", Val: "keyword struct"}, html.Attribute{Key: "id", Val: enum.GetName()}).T("enum")
 	node.T(" ", enum.GetName(), " {")
 	ut := node.E("ul").E("li").E("table")
 	for i, v := range enum.GetValue() {
