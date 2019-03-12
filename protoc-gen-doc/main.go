@@ -86,11 +86,9 @@ func main() {
 		ht.E("title").T(prof)
 		ht.E("style").T(`
 details > summary {
-	list-style-image: url(/home/shyxormz/Desktop/未タイトルのフォルダ2/folder.svg);
 }
 
 details[open] > summary {
-	list-style-image: url(/home/shyxormz/Desktop/未タイトルのフォルダ2/folder-open.svg);
 }
 
 li {
@@ -99,8 +97,6 @@ li {
 
 li > .file {
 	display: list-item;
-	list-style-image: url(/home/shyxormz/Desktop/未タイトルのフォルダ2/application-x-yaml.svg);
-	margin-left: 44px;
 }
 
 .container {
