@@ -84,6 +84,12 @@ li > .file {
 .comment {
 	color: green;
 	white-space: pre;
+	margin-top: 1em;
+	display: block;
+}
+
+li:first-child > .comment {
+	margin-top: 0;
 }
 
 .keyword {
@@ -151,7 +157,7 @@ navbar {
 			return ms[i].Message.GetName() < ms[j].Message.GetName()
 		})
 		for _, m := range ms {
-			g.generateMessage(r, "\t", fmt.Sprintf("4,%d", m.Index), m.Message, ut)
+			g.generateMessage(r, "\t", fmt.Sprintf("4,%d", m.Index), m.Message, ut.E("li"))
 		}
 
 		err := html.Render(g, rt.Node)
