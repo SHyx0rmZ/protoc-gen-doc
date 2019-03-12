@@ -38,13 +38,16 @@ func main() {
 			addTypes(r, t, p+"."+d.GetName())
 		}
 		for _, e := range d.EnumType {
-			typeToFile[p+"."+e.GetName()] = r.GetName()
+			typeToFile[p+"."+d.GetName()+"."+e.GetName()] = r.GetName()
 		}
 	}
 
 	for _, r := range request.ProtoFile {
 		for _, m := range r.MessageType {
 			addTypes(r, m, r.GetPackage())
+			for _, e := range r.EnumType {
+				typeToFile[r.GetPackage()+"."+e.GetName()] = r.GetName()
+			}
 		}
 	}
 
