@@ -10,7 +10,7 @@ import (
 
 func (g *generator) generateService(s *ServiceDescriptorProto, path string, node *generatorNode) {
 	pt := node.E("li").E("code").E("pre")
-	pt.E("span", html.Attribute{Key: "class", Val: "keyword"}).T("service")
+	pt.E("span", html.Attribute{Key: "class", Val: "keyword"}, html.Attribute{Key: "id", Val: s.GetName()}).T("service")
 	pt.T(" ", s.GetName(), " {\n")
 
 	sort.Slice(s.GetMethod(), func(i, j int) bool {

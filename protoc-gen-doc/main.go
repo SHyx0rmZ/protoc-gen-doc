@@ -60,6 +60,7 @@ func main() {
 			n.Enums[r.GetName()] = append(n.Enums[r.GetName()], e.GetName())
 		}
 		for _, s := range r.Service {
+			typeToFile[r.GetPackage()+"."+s.GetName()] = r.GetName()
 			n.Services[r.GetName()] = append(n.Services[r.GetName()], s.GetName())
 		}
 	}
