@@ -78,10 +78,12 @@ li > .file {
 .container {
 	max-width: 60em;
 	margin: 0 auto;
+	font-family: monospace;
 }
 
 .comment {
 	color: green;
+	white-space: pre;
 }
 
 .keyword {

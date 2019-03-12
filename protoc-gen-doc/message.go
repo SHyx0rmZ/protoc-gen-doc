@@ -150,7 +150,6 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 		}
 	}
 	node.T("}")
-
 }
 
 func (g *generator) generateComment(path string, node *generatorNode) {
@@ -159,8 +158,8 @@ func (g *generator) generateComment(path string, node *generatorNode) {
 		return
 	}
 	s := node.E("span", html.Attribute{Key: "class", Val: "comment"})
-	for i, l := range strings.Split(strings.Trim(*loc.LeadingComments, "\n"), "\n") {
-		s.T("//", l, "abc", i)
+	for _, l := range strings.Split(strings.Trim(*loc.LeadingComments, "\n"), "\n") {
+		s.T("//", l)
 		s.E("br")
 	}
 }
@@ -197,13 +196,16 @@ func (g *generator) generateEnum(indent, path string, enum *EnumDescriptorProto,
 	g.generateComment(path, node)
 	node.E("span", html.Attribute{Key: "class", Val: "keyword"}, html.Attribute{Key: "id", Val: enum.GetName()}).T("enum")
 	node.T(" ", enum.GetName(), " {")
-	ut := node.E("table")
-	for _, v := range enum.GetValue() {
+	ut := node.E("ul").E("li").E("table")
+	for i, v := range enum.GetValue() {
+		g.generateComment(fmt.Sprintf("%s,%d,%d", path, 2, i), ut.E("tr", html.Attribute{Key: "colspan", Val: "3"}).E("td"))
 		node := ut.E("tr")
 		node.E("td").T(v.GetName())
 		//node.T(v.GetName(), " = ")
 		node.E("td").T(" = ")
-		node.E("td", html.Attribute{Key: "text-align", Val: "right"}).E("span", html.Attribute{Key: "class", Val: "value"}).T(v.GetNumber())
+		vt := node.E("td", html.Attribute{Key: "text-align", Val: "right"})
+		vt.E("span", html.Attribute{Key: "class", Val: "value"}).T(v.GetNumber())
+		vt.T(";")
 		//node.E("span", html.Attribute{Key: "class", Val: "value"}).T(v.GetNumber())
 		//node.T(";")
 		// todo: options
