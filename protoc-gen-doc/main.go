@@ -103,6 +103,10 @@ li:first-child > .comment {
 	margin-top: 0;
 }
 
+tr:first-child > td > .comment {
+	margin-top: 0;
+}
+
 .struct {
 	margin-top: 1em;
 }
@@ -158,6 +162,26 @@ navbar {
 		}
 
 		ut = bt.E("ul")
+
+		var es []struct {
+			Enum  *EnumDescriptorProto
+			Index int
+		}
+		for i, e := range r.EnumType {
+			es = append(es, struct {
+				Enum  *EnumDescriptorProto
+				Index int
+			}{
+				Enum:  e,
+				Index: i,
+			})
+		}
+		sort.Slice(es, func(i, j int) bool {
+			return es[i].Enum.GetName() < es[j].Enum.GetName()
+		})
+		for _, e := range es {
+			g.generateEnum("", fmt.Sprintf("5,%d", e.Index), e.Enum, ut.E("li", html.Attribute{Key: "class", Val: "struct"}))
+		}
 
 		var ms []struct {
 			Message *DescriptorProto
