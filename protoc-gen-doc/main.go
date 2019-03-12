@@ -72,7 +72,7 @@ li {
 li > .file {
 	display: list-item;
 	list-style-image: url(/home/shyxormz/Desktop/未タイトルのフォルダ2/application-x-yaml.svg);
-	margin-left: 80px;
+	margin-left: 44px;
 }
 
 .container {
@@ -125,13 +125,6 @@ navbar {
 		for i, m := range r.MessageType {
 			g.generateMessage(r, "\t", fmt.Sprintf("4,%d", i), m, ut)
 		}
-
-		//ut = bt.E("ul")
-		//for _, l := range r.SourceCodeInfo.Location {
-		//	ut.T(fmt.Sprintf("%v%s", l.Path, l))
-		//}
-
-		//bt.E("p").T(fmt.Sprintf("%#v\n\n%#v", r, typeToFile))
 
 		err := html.Render(g, rt.Node)
 		if err != nil {
