@@ -98,23 +98,17 @@ li > .file {
 .comment {
 	color: green;
 	white-space: pre;
-	margin-top: 1em;
 	display: block;
 }
 
-li:first-child > .comment {
-	margin-top: 0;
-}
-
-tr:first-child > td > .comment {
-	margin-top: 0;
-}
-
-.struct {
+.comment, .struct {
 	margin-top: 1em;
 }
 
-.struct:first-child {
+li:first-child > .comment,
+tr:first-child > td > .comment,
+struct:first-child,
+.comment.trailing {
 	margin-top: 0;
 }
 

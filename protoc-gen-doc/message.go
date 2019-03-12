@@ -110,7 +110,7 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 	//	ot.E("li").T(strconv.Itoa(i+1), ". ", v)
 	//}
 
-	g.generateComment(path, node)
+	g.generateLeadingComments(path, node)
 	node.E("span", html.Attribute{Key: "class", Val: "keyword"}, html.Attribute{Key: "id", Val: d.GetName()}).T("message")
 	node.T(" ", d.GetName(), " {")
 	ot := node.E("ol")
@@ -148,22 +148,48 @@ func (g *generator) generateMessage(f *FileDescriptorProto, indent, path string,
 		}
 	}
 	node.T("}")
+	g.generateTrailingComments(path, node)
 }
 
-func (g *generator) generateComment(path string, node *generatorNode) {
+func (g *generator) generateLeadingComments(path string, node *generatorNode) {
 	loc, ok := g.comment(path)
 	if !ok {
 		return
 	}
 	s := node.E("span", html.Attribute{Key: "class", Val: "comment"})
-	for _, l := range strings.Split(strings.Trim(*loc.LeadingComments, "\n"), "\n") {
-		s.T("//", l)
-		s.E("br")
+	if len(loc.LeadingDetachedComments) != 0 {
+		for _, p := range loc.LeadingDetachedComments {
+			for _, l := range strings.Split(strings.Trim(p, "\n"), "\n") {
+				s.T("//", l)
+				s.E("br")
+			}
+			s.E("br")
+		}
+	}
+	if loc.LeadingComments != nil {
+		for _, l := range strings.Split(strings.Trim(*loc.LeadingComments, "\n"), "\n") {
+			s.T("//", l)
+			s.E("br")
+		}
+	}
+}
+
+func (g *generator) generateTrailingComments(path string, node *generatorNode) {
+	loc, ok := g.comment(path)
+	if !ok {
+		return
+	}
+	s := node.E("span", html.Attribute{Key: "class", Val: "comment trailing"})
+	if loc.TrailingComments != nil {
+		for _, l := range strings.Split(strings.Trim(*loc.TrailingComments, "\n"), "\n") {
+			s.T("//", l)
+			s.E("br")
+		}
 	}
 }
 
 func (g *generator) generateReservedRange(path string, r *DescriptorProto_ReservedRange, node *generatorNode) {
-	g.generateComment(path, node)
+	g.generateLeadingComments(path, node)
 	node.E("span", html.Attribute{Key: "class", Val: "keyword"}).T("reserved")
 	node.T(" ")
 	node.E("span", html.Attribute{Key: "class", Val: "value"}).T(r.GetStart())
@@ -172,40 +198,45 @@ func (g *generator) generateReservedRange(path string, r *DescriptorProto_Reserv
 		node.E("span", html.Attribute{Key: "class", Val: "value"}).T(r.GetEnd())
 	}
 	node.T(";")
+	g.generateTrailingComments(path, node)
 }
 
 func (g *generator) generateReservedName(path string, name string, node *generatorNode) {
-	g.generateComment(path, node)
+	g.generateLeadingComments(path, node)
 	node.E("span", html.Attribute{Key: "class", Val: "keyword"}).T("reserved")
 	node.T(" ")
 	node.E("span", html.Attribute{Key: "class", Val: "value"}).T(`"`, name, `"`)
 	node.T(";")
+	g.generateTrailingComments(path, node)
 }
 
 func (g *generator) generateField(path string, field *FieldDescriptorProto, node *generatorNode) {
-	g.generateComment(path, node)
+	g.generateLeadingComments(path, node)
 	g.addTypeLink(node, field)
 	node.T(" ", field.GetName(), " = ")
 	node.E("span", html.Attribute{Key: "class", Val: "value"}).T(field.GetNumber())
 	node.T(";")
+	g.generateTrailingComments(path, node)
 }
 
 func (g *generator) generateEnum(indent, path string, enum *EnumDescriptorProto, node *generatorNode) {
-	g.generateComment(path, node)
+	g.generateLeadingComments(path, node)
 	node.E("span", html.Attribute{Key: "class", Val: "keyword struct"}, html.Attribute{Key: "id", Val: enum.GetName()}).T("enum")
 	node.T(" ", enum.GetName(), " {")
 	ut := node.E("ul").E("li").E("table")
 	for i, v := range enum.GetValue() {
-		g.generateComment(fmt.Sprintf("%s,%d,%d", path, 2, i), ut.E("tr").E("td", html.Attribute{Key: "colspan", Val: "3"}))
+		g.generateLeadingComments(fmt.Sprintf("%s,%d,%d", path, 2, i), ut.E("tr").E("td", html.Attribute{Key: "colspan", Val: "3"}))
 		node := ut.E("tr")
 		node.E("td").T(v.GetName())
 		node.E("td").T(" = ")
 		vt := node.E("td", html.Attribute{Key: "text-align", Val: "right"})
 		vt.E("span", html.Attribute{Key: "class", Val: "value"}).T(v.GetNumber())
 		vt.T(";")
+		g.generateTrailingComments(fmt.Sprintf("%s,%d,%d", path, 2, i), node)
 		// todo: options
 	}
 	node.T("}")
+	g.generateTrailingComments(path, node)
 }
 
 func (g *generator) addTypeLink(node *generatorNode, field *FieldDescriptorProto) {

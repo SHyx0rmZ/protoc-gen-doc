@@ -8,7 +8,7 @@ import (
 func (g *generator) loadComments(f *FileDescriptorProto) {
 	g.comments = make(map[string][]*SourceCodeInfo_Location)
 	for _, loc := range f.SourceCodeInfo.Location {
-		if loc.LeadingComments == nil {
+		if loc.LeadingComments == nil && loc.TrailingComments == nil && len(loc.LeadingDetachedComments) == 0 {
 			continue
 		}
 		var p []string
