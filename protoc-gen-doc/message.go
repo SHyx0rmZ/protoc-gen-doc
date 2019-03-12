@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"golang.org/x/net/html"
 	"sort"
-	"strconv"
 	"strings"
 )
 
@@ -207,106 +206,6 @@ func (g *generator) generateEnum(indent, path string, enum *EnumDescriptorProto,
 		// todo: options
 	}
 	node.T("}")
-}
-
-func (g *generator) pommes(indent string, node *generatorNode, path string, d *DescriptorProto, f *FileDescriptorProto) {
-	indent = "\t"
-
-	pt := node.E("li", html.Attribute{Key: "id", Val: d.GetName()}).E("code").E("pre")
-
-	loc, ok := g.comment(path)
-	if ok {
-		pt.E("span", html.Attribute{Key: "class", Val: "comment"}).T("//", strings.Replace(strings.TrimSuffix(*loc.LeadingComments, "\n"), "\n", "\n//", -1), "\n")
-	}
-	pt.E("span", html.Attribute{Key: "class", Val: "keyword"}).T("message")
-	pt.T(" ", d.GetName(), " {\n")
-
-	if len(d.NestedType) > 0 {
-		ut := pt.E("ul")
-		for i, message := range d.NestedType {
-			g.generateMessage(f, indent+"\t", fmt.Sprintf("%s,3,%d", path, i), message, ut)
-		}
-	}
-
-	if len(d.EnumType) > 0 {
-		for _, x := range d.EnumType {
-			pt.T("enum", " ", x.GetName(), " {\n")
-			for _, y := range x.Value {
-				pt.T(indent, y.GetName(), " = ", y.GetNumber(), "\n")
-			}
-			pt.T("}\n")
-		}
-	}
-
-	if len(d.OneofDecl) > 0 {
-		for _, x := range d.OneofDecl {
-			pt.T("oneof", " ", x.GetName(), "\n")
-		}
-	}
-
-	if len(d.GetReservedRange()) > 0 {
-		var rs []string
-		for _, x := range d.GetReservedRange() {
-			if *x.Start != *x.End-1 {
-				rs = append(rs, fmt.Sprintf("%d to %d", *x.Start, *x.End-1))
-			} else {
-				rs = append(rs, strconv.Itoa(int(*x.Start)))
-			}
-		}
-		pt.T(indent)
-		pt.E("span", html.Attribute{Key: "class", Val: "keyword"}).T("reserved")
-		pt.T(" ", strings.Join(rs, ", "), ";\n")
-	}
-
-	if len(d.GetReservedName()) > 0 {
-		var rs []string
-		for _, x := range d.GetReservedName() {
-			rs = append(rs, `"`+x+`"`)
-		}
-		pt.T(indent)
-		pt.E("span", html.Attribute{Key: "class", Val: "keyword"}).T("reserved")
-		pt.T(" ", strings.Join(rs, ", "), ";\n")
-	}
-
-	for i, field := range d.Field {
-		loc, ok := g.comment(fmt.Sprintf("%s,2,%d", path, i))
-		if ok {
-			if i != 0 {
-				pt.T("\n")
-			}
-			pt.T(indent)
-			pt.E("span", html.Attribute{Key: "class", Val: "comment"}).T("//", strings.Replace(strings.Trim(*loc.LeadingComments, "\n"), "\n", "\n"+indent+"//", -1), "\n")
-		}
-
-		pt.T(indent)
-
-		g.addTypeLink(pt, field)
-
-		//pt.T(fmt.Sprintf("%d %#v", field.GetOneofIndex(), field))
-
-		pt.T(" ", field.GetName(), " = ")
-		pt.E("span", html.Attribute{Key: "class", Val: "value"}).T(strconv.Itoa(int(field.GetNumber())))
-
-		if field.Options != nil {
-			pt.T(" [\n")
-			if field.Options.GetDeprecated() {
-				pt.T(indent, "\t")
-				pt.E("span", html.Attribute{Key: "class", Val: "keyword"}).T("deprecated")
-				pt.T(" = ")
-				pt.E("span", html.Attribute{Key: "class", Val: "value"}).T(true)
-				pt.T("\n")
-			}
-			pt.T(indent, "];")
-		}
-
-		pt.T("\n")
-	}
-	pt.T(indent[:len(indent)-1], "}")
-
-	//u := pt.E("ul")
-	//for _, c := range chs {
-	//	u.E("li").T(fmt.Sprintf("%T", c))
-	//}
 }
 
 func (g *generator) addTypeLink(node *generatorNode, field *FieldDescriptorProto) {
