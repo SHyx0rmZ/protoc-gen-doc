@@ -31,9 +31,20 @@ func main() {
 
 	typeToFile := make(map[string]string)
 
+	var addTypes func(r *FileDescriptorProto, d *DescriptorProto, p string)
+	addTypes = func(r *FileDescriptorProto, d *DescriptorProto, p string) {
+		typeToFile[p+"."+d.GetName()] = r.GetName()
+		for _, t := range d.NestedType {
+			addTypes(r, t, p+"."+d.GetName())
+		}
+		for _, e := range d.EnumType {
+			typeToFile[p+"."+e.GetName()] = r.GetName()
+		}
+	}
+
 	for _, r := range request.ProtoFile {
 		for _, m := range r.MessageType {
-			typeToFile[r.GetPackage()+"."+m.GetName()] = r.GetName()
+			addTypes(r, m, r.GetPackage())
 		}
 	}
 
