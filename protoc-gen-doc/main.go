@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"code.witches.io/go/grpc-doc/proto"
 	"fmt"
+	proto2 "github.com/golang/protobuf/proto"
 	"golang.org/x/net/html"
 	"io/ioutil"
 	"os"
@@ -15,6 +16,8 @@ import (
 var n struct {
 	Services, Messages, Enums map[string][]string
 }
+
+var typeToFile map[string]string
 
 func main() {
 	var request CodeGeneratorRequest
@@ -33,7 +36,7 @@ func main() {
 		File: make([]*CodeGeneratorResponse_File, 0),
 	}
 
-	typeToFile := make(map[string]string)
+	typeToFile = make(map[string]string)
 	n.Services = make(map[string][]string)
 	n.Messages = make(map[string][]string)
 	n.Enums = make(map[string][]string)
@@ -222,6 +225,8 @@ navbar {
 		response.File = append(response.File, file)
 	}
 
+	response.File = append(response.File, index(request.ProtoFile))
+
 	data, err = proto.Marshal(&response)
 	if err != nil {
 		panic(err)
@@ -257,4 +262,140 @@ var typeMap = map[FieldDescriptorProto_Type]string{
 	FieldDescriptorProto_TYPE_SFIXED64: "sfixed64",
 	FieldDescriptorProto_TYPE_SINT32:   "sint32",
 	FieldDescriptorProto_TYPE_SINT64:   "sint64",
+}
+
+func index(rs []*FileDescriptorProto) *CodeGeneratorResponse_File {
+	g := generator{new(bytes.Buffer), typeToFile, "", nil}
+
+	rt := &generatorNode{
+		Node: &html.Node{
+			Type: html.DocumentNode,
+		},
+	}
+	rt.AppendChild(&html.Node{
+		Type: html.DoctypeNode,
+		Data: "html",
+	})
+
+	ht := rt.E("html", html.Attribute{Key: "lang", Val: "ja"}).E("head")
+	ht.E("meta", html.Attribute{Key: "charset", Val: "UTF-8"})
+	ht.E("title").T("Protocol Buffers")
+	ht.E("style").T(`
+details > summary {
+}
+
+details[open] > summary {
+}
+
+li {
+	list-style: none;
+	white-space: nowrap;
+}
+
+li > .file {
+	display: list-item;
+}
+
+.container {
+	max-width: 60em;
+	margin: 0 auto;
+	font-family: monospace;
+}
+
+.comment {
+	color: green;
+	white-space: pre;
+	display: block;
+}
+
+.comment, .struct {
+	margin-top: 1em;
+}
+
+li:first-child > .comment,
+tr:first-child > td > .comment,
+struct:first-child,
+.comment.trailing {
+	margin-top: 0;
+}
+
+.keyword {
+	color: maroon;
+}
+
+.type {
+	color: darkorange;
+}
+
+.value {
+	color: navy;
+}
+
+navbar {
+	float: left;
+	position: fixed;
+}`)
+	bt := ht.E("body").E("div", html.Attribute{Key: "class", Val: "container"})
+	bt.E("h1").T("Protocol Buffers")
+	bt.E("h2").T("Files")
+	ot := bt.E("ol")
+	for _, r := range rs {
+		ot.E("li").E("a", html.Attribute{Key: "href", Val: strings.Replace(r.GetName(), ".proto", ".html", -1)}).T(r.GetName())
+	}
+	if len(n.Services) > 0 {
+		bt.E("h2").T("Services")
+		ot := bt.E("ol")
+		var ps []string
+		for p := range n.Services {
+			ps = append(ps, p)
+		}
+		sort.Strings(ps)
+		for _, p := range ps {
+			for _, s := range n.Services[p] {
+				g.addTypeLink(ot.E("li"), &FieldDescriptorProto{TypeName: proto.String("." + strings.Replace(filepath.Dir(p), "/", ".", -1) + "." + s)})
+				ot.LastChild.LastChild.LastChild.LastChild.Data = filepath.Dir(p) + "." + s
+
+			}
+		}
+	}
+	if len(n.Enums) > 0 {
+		bt.E("h2").T("Enums")
+		ot := bt.E("ol")
+		var ps []string
+		for p := range n.Enums {
+			ps = append(ps, p)
+		}
+		sort.Strings(ps)
+		for _, p := range ps {
+			for _, s := range n.Enums[p] {
+				g.addTypeLink(ot.E("li"), &FieldDescriptorProto{TypeName: proto.String("." + strings.Replace(filepath.Dir(p), "/", ".", -1) + "." + s)})
+				ot.LastChild.LastChild.LastChild.LastChild.Data = filepath.Dir(p) + "." + s
+			}
+		}
+	}
+	if len(n.Messages) > 0 {
+		bt.E("h2").T("Messages")
+		ot := bt.E("ol")
+		var ps []string
+		for p := range n.Messages {
+			ps = append(ps, p)
+		}
+		sort.Strings(ps)
+		for _, p := range ps {
+			for _, s := range n.Messages[p] {
+				g.addTypeLink(ot.E("li"), &FieldDescriptorProto{TypeName: proto.String("." + strings.Replace(filepath.Dir(p), "/", ".", -1) + "." + s)})
+				ot.LastChild.LastChild.LastChild.LastChild.Data = filepath.Dir(p) + "." + s
+			}
+		}
+	}
+
+	err := html.Render(g, rt.Node)
+	if err != nil {
+		panic(err)
+	}
+
+	return &CodeGeneratorResponse_File{
+		Name:    proto2.String("index.html"),
+		Content: proto2.String(g.String()),
+	}
 }
