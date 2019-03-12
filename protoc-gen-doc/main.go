@@ -112,11 +112,24 @@ navbar {
 
 		ut := bt.E("ul")
 
-		sort.Slice(r.Service, func(i, j int) bool {
-			return r.Service[i].GetName() < r.Service[j].GetName()
-		})
+		var ss []struct {
+			Service *ServiceDescriptorProto
+			Index   int
+		}
 		for i, s := range r.Service {
-			g.generateService(s, fmt.Sprintf("6,%d", i), ut)
+			ss = append(ss, struct {
+				Service *ServiceDescriptorProto
+				Index   int
+			}{
+				Service: s,
+				Index:   i,
+			})
+		}
+		sort.Slice(ss, func(i, j int) bool {
+			return ss[i].Service.GetName() < ss[j].Service.GetName()
+		})
+		for _, s := range ss {
+			g.generateService(s.Service, fmt.Sprintf("6,%d", s.Index), ut)
 		}
 
 		ut = bt.E("ul")
