@@ -12,6 +12,10 @@ import (
 	"strings"
 )
 
+var n struct {
+	Services, Messages, Enums map[string][]string
+}
+
 func main() {
 	var request CodeGeneratorRequest
 
@@ -30,24 +34,33 @@ func main() {
 	}
 
 	typeToFile := make(map[string]string)
+	n.Services = make(map[string][]string)
+	n.Messages = make(map[string][]string)
+	n.Enums = make(map[string][]string)
 
-	var addTypes func(r *FileDescriptorProto, d *DescriptorProto, p string)
-	addTypes = func(r *FileDescriptorProto, d *DescriptorProto, p string) {
+	var addTypes func(r *FileDescriptorProto, d *DescriptorProto, p, pr string)
+	addTypes = func(r *FileDescriptorProto, d *DescriptorProto, p, pr string) {
 		typeToFile[p+"."+d.GetName()] = r.GetName()
+		n.Messages[r.GetName()] = append(n.Messages[r.GetName()], pr+d.GetName())
 		for _, t := range d.NestedType {
-			addTypes(r, t, p+"."+d.GetName())
+			addTypes(r, t, p+"."+d.GetName(), pr+d.GetName()+".")
 		}
 		for _, e := range d.EnumType {
 			typeToFile[p+"."+d.GetName()+"."+e.GetName()] = r.GetName()
+			n.Enums[r.GetName()] = append(n.Enums[r.GetName()], pr+d.GetName()+"."+e.GetName())
 		}
 	}
 
 	for _, r := range request.ProtoFile {
 		for _, m := range r.MessageType {
-			addTypes(r, m, r.GetPackage())
-			for _, e := range r.EnumType {
-				typeToFile[r.GetPackage()+"."+e.GetName()] = r.GetName()
-			}
+			addTypes(r, m, r.GetPackage(), "")
+		}
+		for _, e := range r.EnumType {
+			typeToFile[r.GetPackage()+"."+e.GetName()] = r.GetName()
+			n.Enums[r.GetName()] = append(n.Enums[r.GetName()], e.GetName())
+		}
+		for _, s := range r.Service {
+			n.Services[r.GetName()] = append(n.Services[r.GetName()], s.GetName())
 		}
 	}
 

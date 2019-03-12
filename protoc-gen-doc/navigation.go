@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/html"
 	"path/filepath"
 	"sort"
@@ -82,5 +83,44 @@ func (g *generator) generateNavigation(fs []*FileDescriptorProto, open string, n
 		}
 	}
 
-	generate(paths, "", node)
+	dt := node.E("div")
+	dt.E("h2").T("Files")
+	generate(paths, "", dt)
+	dt = node.E("div")
+	if len(n.Services[open]) > 0 {
+		dt.E("h2").T("Services")
+		sort.Strings(n.Services[open])
+		ot := dt.E("ot")
+		for _, s := range n.Services[open] {
+			g.addTypeLink(ot.E("li"), &FieldDescriptorProto{TypeName: proto.String("." + strings.Replace(filepath.Dir(open), "/", ".", -1) + "." + s)})
+			l := &ot.LastChild.LastChild.LastChild.LastChild.Data
+			if strings.HasPrefix(*l, filepath.Base(filepath.Dir(open))+".") {
+				*l = strings.Split(*l, ".")[1]
+			}
+		}
+	}
+	if len(n.Enums[open]) > 0 {
+		dt.E("h2").T("Enums")
+		sort.Strings(n.Enums[open])
+		ot := dt.E("ot")
+		for _, s := range n.Enums[open] {
+			g.addTypeLink(ot.E("li"), &FieldDescriptorProto{TypeName: proto.String("." + strings.Replace(filepath.Dir(open), "/", ".", -1) + "." + s)})
+			l := &ot.LastChild.LastChild.LastChild.LastChild.Data
+			if strings.HasPrefix(*l, filepath.Base(filepath.Dir(open))+".") {
+				*l = strings.Split(*l, ".")[1]
+			}
+		}
+	}
+	if len(n.Messages[open]) > 0 {
+		dt.E("h2").T("Messages")
+		sort.Strings(n.Messages[open])
+		ot := dt.E("ot")
+		for _, s := range n.Messages[open] {
+			g.addTypeLink(ot.E("li"), &FieldDescriptorProto{TypeName: proto.String("." + strings.Replace(filepath.Dir(open), "/", ".", -1) + "." + s)})
+			l := &ot.LastChild.LastChild.LastChild.LastChild.Data
+			if strings.HasPrefix(*l, filepath.Base(filepath.Dir(open))+".") {
+				*l = strings.Split(*l, ".")[1]
+			}
+		}
+	}
 }
