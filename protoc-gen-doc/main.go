@@ -121,11 +121,24 @@ navbar {
 
 		ut = bt.E("ul")
 
-		sort.Slice(r.MessageType, func(i, j int) bool {
-			return r.MessageType[i].GetName() < r.MessageType[j].GetName()
-		})
+		var ms []struct {
+			Message *DescriptorProto
+			Index   int
+		}
 		for i, m := range r.MessageType {
-			g.generateMessage(r, "\t", fmt.Sprintf("4,%d", i), m, ut)
+			ms = append(ms, struct {
+				Message *DescriptorProto
+				Index   int
+			}{
+				Message: m,
+				Index:   i,
+			})
+		}
+		sort.Slice(ms, func(i, j int) bool {
+			return ms[i].Message.GetName() < ms[j].Message.GetName()
+		})
+		for _, m := range ms {
+			g.generateMessage(r, "\t", fmt.Sprintf("4,%d", m.Index), m.Message, ut)
 		}
 
 		err := html.Render(g, rt.Node)
